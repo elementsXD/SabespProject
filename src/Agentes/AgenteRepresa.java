@@ -14,7 +14,6 @@ import jade.lang.acl.ACLMessage;
 public class AgenteRepresa extends Agent {
 
     private String nomeRepresa = new String();
-    private String represaConectada = new String();
     private float capacidadeMaxima;
     private float nivelAtual;
     private AID posterior;
@@ -27,15 +26,16 @@ public class AgenteRepresa extends Agent {
         this.nomeRepresa = nomeRepresa;
     }
 
-    public String getRepresaConectada() {
-        return represaConectada;
-    }
 
-    public void setRepresaConectada(String represaConectada) {
-        this.represaConectada = represaConectada;
-    }
+    private AID getPosterior() {
+		return posterior;
+	}
 
-    public float getCapacidadeMaxima() {
+	private void setPosterior(AID posterior) {
+		this.posterior = posterior;
+	}
+
+	public float getCapacidadeMaxima() {
         return capacidadeMaxima;
     }
 
@@ -78,7 +78,7 @@ public class AgenteRepresa extends Agent {
                         myAgent.send(reply);
 
                         ACLMessage envio = new ACLMessage(ACLMessage.INFORM);
-                        envio.addReceiver(posterior);
+                        envio.addReceiver(getPosterior());
                         envio.setContent("ADD 3000L");
 
                     }
