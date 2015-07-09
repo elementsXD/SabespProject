@@ -5,6 +5,7 @@ package Agentes;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -72,28 +73,41 @@ public class AgenteConsumidor extends Agent{
     	catch (FIPAException e){
     		e.printStackTrace();
     	}
+    
     	
-    	
-    	addBehaviour(new CyclicBehaviour(this) {
+    	addBehaviour(new TickerBehaviour(this,1000) {
 			
+    		int qtdDiasAno= 360;
+    		
 			@Override
-			public void action() {
+			protected void onTick() {
 				// TODO Auto-generated method stub
+				if(getTickCount()>qtdDiasAno){
+					stop();
+				}
+				else{
 				
-				ACLMessage msg = myAgent.receive();
-				if(msg != null){
-					
-					String idConversa = msg.getConversationId();
-					String content = msg.getContent();
-					
-					if(idConversa.equalsIgnoreCase("Solicitação de água")){
-						ConsumirAgua(Float.parseFloat(content));
+				
+				while(msgRecebida == false){
+					ACLMessage msg = myAgent.receive();
+					if(msg != null){
+						
+						String idConversa = msg.getConversationId();
+						String content = msg.getContent();
+						
+						if(idConversa.equalsIgnoreCase("Solicitação de água")){
+							ConsumirAgua(Float.parseFloat(content));
+							msgRecebida = true;
+						}
 					}
 				}
 				
-				
+			}
 			}
 		});
+    	
+			
+		
     	
     	
     }
