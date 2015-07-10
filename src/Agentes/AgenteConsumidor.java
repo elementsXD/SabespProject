@@ -89,6 +89,8 @@ public class AgenteConsumidor extends Agent{
 				
 				
 				while(msgRecebida == false){
+					//parte do código para receber a quantidade de água do agente ETA
+					
 					ACLMessage msg = myAgent.receive();
 					if(msg != null){
 						
