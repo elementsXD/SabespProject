@@ -2,9 +2,8 @@ package Agentes;
 
 
 
-import jade.core.AID;
+
 import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
@@ -16,6 +15,7 @@ import jade.lang.acl.ACLMessage;
  *
  * @author Erik
  */
+@SuppressWarnings("serial")
 public class AgenteConsumidor extends Agent{
     
     private String areaDistribuicao = new String();
@@ -89,6 +89,8 @@ public class AgenteConsumidor extends Agent{
 				
 				
 				while(msgRecebida == false){
+					//parte do código para receber a quantidade de água do agente ETA
+					
 					ACLMessage msg = myAgent.receive();
 					if(msg != null){
 						
