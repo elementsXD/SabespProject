@@ -5,6 +5,10 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.domain.AMSService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 
 /**
@@ -17,6 +21,8 @@ public class AgenteRepresa extends Agent {
     private float capacidadeMaxima;
     private float nivelAtual;
     private AID posterior;
+    private AID myAID;
+    
 
     public String getNomeRepresa() {
         return nomeRepresa;
@@ -51,6 +57,67 @@ public class AgenteRepresa extends Agent {
         this.nivelAtual = nivelAtual;
     }
 
+    public void capturaNome(){
+    	myAID = this.getAID();
+    	if(myAID.equals("Jaguari")){
+    	
+    	}else if(myAID.equals("Cachoeira")){
+    	
+    	}else if(myAID.equals("Atibainha")){
+    	
+    	}else if(myAID.equals("Juqueri")){
+    	
+    	}else if(myAID.equals("AguasClaras")){
+    	
+    	}
+    }
+    
+    public void solicitaNivelAgua(){
+    	
+    	
+    	/*
+    	AMSAgentDescription[] agentes = null;
+		SearchConstraints c = new SearchConstraints();
+		c.setMaxResults(new Long(-1));
+		
+		
+		try{
+			
+			agentes = AMSService.search(myAgent, new AMSAgentDescription(), c);
+			
+			
+			for(int i = 0; i<agentes.length;i++){
+				AID agenteID = agentes[i].getName();
+				
+				if(agenteID.equals("aguasClaras@Sabesp:1099/JADE")){
+					setAguasClaras(agenteID);
+					
+				}
+			}
+		    		
+		    //Vou buscar pelos agentes
+		    //a busca retorna um array DFAgente Description
+		    //o paramentro this indica o agente que está realizando a busca
+		   
+		    
+		
+		    ACLMessage msgEnviada = new ACLMessage(ACLMessage.REQUEST);
+	  	    msgEnviada.setOntology("Requisição de água");
+    	    msgEnviada.setLanguage("Português");
+    	    msgEnviada.setSender();
+     	    msgEnviada.setContent();
+	 	    msgEnviada.setConversationId("Requisição de água");
+	 	    myAgent.send(msgEnviada);
+		    	    
+		    	    
+		}	
+	   	catch(FIPAException e){
+	   		e.printStackTrace();
+	   	}
+		
+	}*/
+    }
+    
     protected void setup() {
 
         System.out.println("O nome da represa é" + getAID().getLocalName());
@@ -63,6 +130,9 @@ public class AgenteRepresa extends Agent {
             @Override
             public void action() {
 
+            	
+            	
+            	
                 ACLMessage msg = myAgent.receive();
                 if (msg != null) {
                     //tratamento das mensagens
@@ -79,7 +149,7 @@ public class AgenteRepresa extends Agent {
 
                         ACLMessage envio = new ACLMessage(ACLMessage.INFORM);
                         envio.addReceiver(getPosterior());
-                        envio.setContent("ADD 3000L");
+                        envio.setContent("");
 
                     }
 
