@@ -43,7 +43,7 @@ public class AgenteConsumidor extends Agent{
     	System.out.println("Iniciando processo de solicitação de água.");
     
     	
-    	//Fa
+    	
     	
     	DFAgentDescription template = new DFAgentDescription();
     	
