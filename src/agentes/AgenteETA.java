@@ -1,4 +1,4 @@
-package Agentes;
+package agentes;
 
 
 import jade.domain.AMSService;

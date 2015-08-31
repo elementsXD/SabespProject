@@ -1,9 +1,8 @@
-package Agentes;
+package agentes;
 
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.AMSService;
 import jade.domain.DFService;
@@ -13,14 +12,19 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
-import jade.proto.states.MsgReceiver;
 
 /**
  *
  * @author Erik
  */
+@SuppressWarnings("serial")
 public class AgenteRepresa extends Agent {
 
+	public AgenteRepresa(float nivelAtual,float  capacidadeMaxima){
+		setNivelAtual(nivelAtual);
+		setCapacidadeMaxima(capacidadeMaxima);
+	}
+	
     private String nomeRepresa = new String();
     private float capacidadeMaxima;
     private float nivelAtual;
@@ -156,50 +160,13 @@ DFAgentDescription template = new DFAgentDescription();
     	if(represaPosterior != null){
     	
     	//solicitação do nivel da represa
-    	ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-		msg.setOntology("Nivel água");
-	    msg.setLanguage("Português");
-	    msg.setSender(represaPosterior);
- 	    msg.setContent(null);
- 	    msg.setConversationId("Nivel água");
- 	    this.send(msg);
+    	
+    	enviaMensagem(16,"Nivel água", "Português", represaPosterior, null, "Nivel água" );	
+    	
     	} 
     	else{
     		System.out.println("Não tem represa posterior.");
     	}
-    }
-    
-    public void solicitaAgua(float aguaNecessaria, AID represa){
-    	
-			ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-			msg.setOntology("Solicitação");
-		    msg.setLanguage("Português");
-		    msg.setSender(represa);
-	 	    msg.setContent(String.valueOf(aguaNecessaria));
-	 	    msg.setConversationId("Solicitação de água");
-	 	    this.send(msg);
-    }
-    
-    public void enviaAgua(float aguaEnviar, AID sender){
-
-    	//a partir da foruma de fisica vai se manter enviando água
-    	ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-		msg.setOntology("Entrega de água");
-	    msg.setLanguage("Português");
-	    msg.setSender(sender);
- 	    msg.setContent(String.valueOf(aguaEnviar));
- 	    msg.setConversationId("Entrega de água");
- 	    this.send(msg);
-    }
-    
-    public void RespostaSolicitação(float aguaEnviar, AID sender){
-    	ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-		msg.setOntology("Resposta");
-	    msg.setLanguage("Português");
-	    msg.setSender(sender);
- 	    msg.setContent(String.valueOf(aguaEnviar));
- 	    msg.setConversationId("Solicitação de agua - resposta");
- 	    this.send(msg);
     }
     
 
@@ -209,20 +176,17 @@ DFAgentDescription template = new DFAgentDescription();
 		
 		//verifica se o nivel Represa ficaria positivo após entregar a agua
 		if(nivelAtual > 0){
-			RespostaSolicitação(aguaNecessaria, sender);
+			enviaMensagem(7,"Resposta","Português", sender,String.valueOf(aguaNecessaria), "Solicitação de agua - resposta" );
+			
 		}else{
 		//Caso a quantidade de agua não seja o bastante a Represa solicita para a anterior água 
 			aguaNecessaria *= -1;
 			if(getRepresaAnterior() != null)
-			solicitaAgua(aguaNecessaria, getRepresaAnterior());
+				enviaMensagem(16,"Solicitação","Português", getRepresaAnterior(), String.valueOf(aguaNecessaria), "Solicitação de agua" );
+			
 			else{
-				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-				msg.setOntology("Resposta");
-			    msg.setLanguage("Português");
-			    msg.setSender(sender);
-		 	    msg.setContent(String.valueOf(aguaEnviar));
-		 	    msg.setConversationId("Represa sem água");
-		 	    this.send(msg);	
+				enviaMensagem(7,"Resposta","Português",sender,String.valueOf(aguaEnviar), "Represa sem água");
+					
 			}
 		}
     	
@@ -254,19 +218,20 @@ DFAgentDescription template = new DFAgentDescription();
 					
 					if(idConversa.equalsIgnoreCase("Nivel água") && tipoMensagem == 16){
 						
-						enviaMensagem(16, "Nivel água - resposta","Português", msgReceive.getSender(), String.valueOf(getPorcentagemRepresa()), "Nivel água - resposta");
+						enviaMensagem(7, "Nivel água - resposta","Português", msgReceive.getSender(), String.valueOf(getPorcentagemRepresa()), "Nivel água - resposta");
 						
 					}else if(idConversa.equalsIgnoreCase("Nivel água - resposta") && tipoMensagem == 7){
 						
 						float nivelRepresa = Float.parseFloat(msgReceive.getContent());
 						if(nivelRepresa < 100 && porcentagemRepresa > nivelManterEnviandoAgua){
-							//como será um fluxo continuo de agua apenas mexendo na pressao, só iremos chamar
-							//o metodo de envio que será modificado mais pra frente so passando a pressao e o 
+							//como será um fluxo continuo de agua apenas mexendo na pressao, só iremos chamar o metodo de acordo com o necessario
 							
-							enviaAgua(aguaEnviar,msgReceive.getSender());
+							enviaMensagem(16,"Entrega de água","Português",msgReceive.getSender(),String.valueOf(aguaEnviar), "Entrega de água");
+							//a partir da foruma de fisica vai se manter enviando água
+							
 						}
 						else{
-							
+							enviaMensagem(7,"Entrega de água", "Português", msgReceive.getSender(),String.valueOf(0),  "Entrega de água" );
 						}
 					}else if(idConversa.equalsIgnoreCase("Requisição de água") && tipoMensagem == 16){
 						float valorDistribuir = Float.parseFloat(msgReceive.getContent());
@@ -274,12 +239,12 @@ DFAgentDescription template = new DFAgentDescription();
 						
 						//verifica se o nivel Represa ficaria positivo após entregar a agua
 						if(nivelAtual > 0){
-							enviaAgua(aguaNecessaria, msgReceive.getSender());
+							enviaMensagem(7,"Entrega de água", "Português", msgReceive.getSender(),String.valueOf(aguaNecessaria), "Entrega de água");
 						}else{
 						//Caso a quantidade de agua não seja o bastante a Represa solicita para a anterior água 
 							aguaNecessaria *= -1;
-							
-							solicitaAgua(aguaNecessaria, getRepresaAnterior());
+
+							enviaMensagem(16,"Solicitação","Português", getRepresaAnterior(), String.valueOf(aguaNecessaria), "Solicitação de agua" );
 							
 						}
 					}else if(idConversa.equalsIgnoreCase("Solicitação de água")){
@@ -287,7 +252,8 @@ DFAgentDescription template = new DFAgentDescription();
 						
 					}else if(idConversa.equalsIgnoreCase("Solicitação de água - resposta")){
 						if(represaPosterior != null)
-						RespostaSolicitação(Float.parseFloat(msgReceive.getContent()), getRepresaPosterior());
+							enviaMensagem(7,"Resposta","Português", getRepresaPosterior(), msgReceive.getContent(), "Solicitação de agua - resposta" );
+	
 						else{
 							nivelAtual += Float.parseFloat(msgReceive.getContent());
 							procuraEta(String.valueOf(nivelAtual));
@@ -298,10 +264,11 @@ DFAgentDescription template = new DFAgentDescription();
 					}
 					else if (idConversa.equalsIgnoreCase("Represa sem água")){
 						if(represaPosterior != null)
-						RespostaSolicitação(0,getRepresaPosterior());
+							enviaMensagem(7,"Resposta","Português", getRepresaPosterior(), String.valueOf(0), "Solicitação de agua - resposta" );
+						
 						else{
 							//mensagem de inform
-							enviaMensagem(16, "Resposta", "Português", msgReceive.getSender(), String.valueOf(aguaEnviar), "Represa sem água");
+							enviaMensagem(7, "Resposta", "Português", msgReceive.getSender(), String.valueOf(aguaEnviar), "Represa sem água");
 							
 							
 						}
