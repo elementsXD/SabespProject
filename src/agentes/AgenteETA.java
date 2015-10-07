@@ -12,248 +12,286 @@ import jade.lang.acl.ACLMessage;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.OneShotBehaviour;
+import formulasProjeto.*;
 
 @SuppressWarnings("serial")
 public class AgenteETA extends Agent {
+
+
+	private float consumoConsumidor;
+	private AID nomeConsumidor;
+	private AID paivaCastro;
+	private AID gestorCrise;
+	private float qtdAguaDistribuir;
+	private float capacidadeMaxima;
+	private float nivelAtual;
+	private int p;
+	private int q;
+	private int k1;
+	private int q_esp;
 	
 	
-	static final int QTDCONSUMIDORES = 4;
-	float consumoConsumidores[] = new float[QTDCONSUMIDORES];
-	AID nomeConsumidores[] = new AID[QTDCONSUMIDORES];
-	float consumoTotal = 0;
-	AID aguasClaras;
-	AID tomadorDecisoes;
-	float porcentagemRegiao[] = new float[QTDCONSUMIDORES];
-	private float qtdAguaDistribuir = 0;
 	
 	public void distribuiAgua(AID destino, float aguaEnviar){
-		ACLMessage msg = new ACLMessage(ACLMessage.CONFIRM);
-		msg.setOntology("Entrega de agua");
-	    msg.setLanguage("Português");
-	    msg.setSender(destino);
- 	    msg.setContent(String.valueOf(aguaEnviar));
- 	    msg.setConversationId("Entrega de agua");
- 	    this.send(msg);
- 	    
+		
+		float aguaEntregue = 0;
+		FormulasFisicas form = new FormulasFisicas();
+		
+		
+		
+		float aguaSendoEntregue = 0;
+		
+		aguaSendoEntregue = form.vazaoETA(p, q, k1, q_esp);
+		
+		
+		
+		while(aguaEntregue < aguaEnviar){
+
+			ACLMessage msg = new ACLMessage(ACLMessage.CONFIRM);
+			msg.setOntology("Entrega de agua");
+			msg.setLanguage("Portugues");
+			msg.addReceiver(destino);
+			msg.setContent(String.valueOf(aguaSendoEntregue));
+			msg.setConversationId("Entrega de agua");
+			this.send(msg);
+			
+			aguaEntregue += aguaSendoEntregue;
+			
+		}
+				
 	}
 	
-	
-	public void RegistraServico(){
-		
-		String tipoServico = "Fornecimento";
-		String nomeServico = "Fornecimento de água";
-		
-		//Criação da entra DF
-		DFAgentDescription dfd = new DFAgentDescription();
-		dfd.setName(getAID()); //informa o AID do agente
-		
-		
-		//Criação do serviço 
-		ServiceDescription sd = new ServiceDescription();
-		sd.setType(tipoServico);
-		sd.setName(nomeServico);
-		//Adição do serviço
-		
-		dfd.addServices(sd);
-		
-		//Criação do serviço
-		try{
-			//register(agente que oferece, descrição)
-			DFService.register(this, dfd);
-			System.out.println("Serviço registrado com sucesso.");
-		}catch (FIPAException e){
-			e.printStackTrace();
-		}
+	public void configuradorVazao(int p, int q, int k1, int q_esp){
+		setP(p);
+		setQ(q);
+		setK1(k1);
+		setQ_esp(q_esp);
 	}
 
-	public void setup(){
-		//inicialização do agente 
-		System.out.println("Agente ETA foi inicializado!");
-		System.out.println("Registrando serviço de fornecimento de água.");
-		//registro do serviço de fornecimento de agua 
-		RegistraServico();
+	public void informacoesEta(){
 		
-		//comportamento para receber a quantidade de gasto de agua dos consumidores 
-		addBehaviour(new CyclicBehaviour(this) {
-			//comportamento de recepção dos valores de consumo
-			@Override
-			public void action() {
-				// TODO Auto-generated method stub
-				
-				int contadorMsg = 0;
-				
-				
-				while(contadorMsg>QTDCONSUMIDORES){
-				
-					ACLMessage msg = myAgent.receive();
-					if(msg != null){
-						
-						String idConversa = msg.getConversationId();
-						String content = msg.getContent();
-						int tipoMensagem = msg.getPerformative();
-						
-						
-						if(idConversa.equalsIgnoreCase("Solicitação de água") && tipoMensagem == 16){
-							consumoConsumidores[contadorMsg] = Float.parseFloat(content);
-							nomeConsumidores[contadorMsg] = msg.getSender();
-							consumoTotal += consumoConsumidores[contadorMsg];
-							contadorMsg ++;
-						}
-					}
-				}
-				
-				
-				AMSAgentDescription[] agentes = null;
-				SearchConstraints c = new SearchConstraints();
-				c.setMaxResults(new Long(-1));
-				
-				
-				try{
-					
-					agentes = AMSService.search(myAgent, new AMSAgentDescription(), c);
-					
-					
-					for(int i = 0; i<agentes.length;i++){
-						AID agenteID = agentes[i].getName();
-						
-						if(agenteID.equals("aguasClaras@Sabesp:1099/JADE")){
-							setAguasClaras(agenteID);
-							
-						}
-					}
-				    		
-				    //Vou buscar pelos agentes
-				    //a busca retorna um array DFAgente Description
-				    //o paramentro this indica o agente que está realizando a busca
-				   
-				    
-				
-				    ACLMessage msgEnviada = new ACLMessage(ACLMessage.REQUEST);
-			  	    msgEnviada.setOntology("Requisição de água");
-		    	    msgEnviada.setLanguage("Português");
-		    	    msgEnviada.setSender(getAguasClaras());
-		     	    msgEnviada.setContent(String.valueOf(consumoTotal));
-			 	    msgEnviada.setConversationId("Requisição de água");
-			 	    myAgent.send(msgEnviada);
-				    	    
-				    	    
-				}	
-			   	catch(FIPAException e){
-			   		e.printStackTrace();
-			   	}
-				
-			}
-		});
-		
-		
-		//evento para passar a quantidade de agua para o consumidor
-		addBehaviour(new CyclicBehaviour(this) {
-			//
-			@Override
-			public void action() {
-				// TODO Auto-generated method stub
-				ACLMessage msg = myAgent.receive();
-				if(msg != null){
-					
-					String idConversa = msg.getConversationId();
-					String content = msg.getContent();
-					
-					if(idConversa.equalsIgnoreCase("Requisição de água")){
-						setQtdAguaDistribuir(Float.parseFloat(content));
-					}
-				}
-				
-				for(int i = 0;i<nomeConsumidores.length;i++){
-					if(consumoTotal == qtdAguaDistribuir){
-						
-						for(i = 0; i>QTDCONSUMIDORES;i++){
-							qtdAguaDistribuir -= consumoConsumidores[i];
-							distribuiAgua(nomeConsumidores[i],consumoConsumidores[i]);
-						}
-						
-					}
-					else if(consumoTotal > qtdAguaDistribuir){
-						//faz a estrategia de distribuição considerando o valor de agua que recebeu
-						for (i = 0;i<QTDCONSUMIDORES;i++){
-							porcentagemRegiao[i] = consumoConsumidores[i] / qtdAguaDistribuir;
-							float aguaEnviar = qtdAguaDistribuir * porcentagemRegiao[i];
-							distribuiAgua(nomeConsumidores[i], aguaEnviar);
-							
-						}
-						
-					}else if(consumoTotal < qtdAguaDistribuir){
-						//distribui a agua de forma de tal forma que os consumidores recebam o necessário
-						
-						float excedente = consumoTotal - qtdAguaDistribuir;
-						float valorEnvio = 0;
-						for(i=0; i<QTDCONSUMIDORES;i++){
-							porcentagemRegiao[i] = consumoConsumidores[i] / qtdAguaDistribuir;
-							valorEnvio = consumoConsumidores[i] + (porcentagemRegiao[i] * excedente);
-							distribuiAgua(nomeConsumidores[i],valorEnvio);
-						}
-						
-					}else{
-						for (i = 0;i<QTDCONSUMIDORES;i++){
-							distribuiAgua(nomeConsumidores[i],0);
-						}
-					}
-				}
-						
-				
-			}
-		});
-		
-		
-		//comportamento para informar o gasto para o tomador de decisões
-		addBehaviour(new CyclicBehaviour(this) {
+		addBehaviour(new OneShotBehaviour(this) {
 			
 			@Override
 			public void action() {
 				// TODO Auto-generated method stub
-				
-				AMSAgentDescription[] agentes = null;
-				SearchConstraints c = new SearchConstraints();
-				c.setMaxResults(new Long(-1));
-				
-				try{
-					
-					agentes = AMSService.search(myAgent, new AMSAgentDescription(), c);
-					
-					
-					for(int i = 0; i<agentes.length;i++){
-						AID agenteID = agentes[i].getName();
-						
-						if(agenteID.equals("TomadorDecisoes@Sabesp:1099/JADE")){
-							setTomadorDecisoes(agenteID);
-							
-						}
-					}
-				    		
-				    //Vou buscar pelos agentes
-				    //a busca retorna um array DFAgente Description
-				    //o paramentro this indica o agente que está realizando a busca
-				   
-				    
-				
-				    ACLMessage msgEnviada = new ACLMessage(ACLMessage.REQUEST);
-			  	    msgEnviada.setOntology("Gasto diário");
-		    	    msgEnviada.setLanguage("Português");
-		    	    msgEnviada.setSender(getTomadorDecisoes());
-		     	    msgEnviada.setContent(String.valueOf(consumoTotal));
-			 	    msgEnviada.setConversationId("Gasto diário");
-			 	    myAgent.send(msgEnviada);
-				    	    
-				    	    
-				}	
-			   	catch(FIPAException e){
-			   		e.printStackTrace();
-			   	}
+
+				setCapacidadeMaxima(1328000);
+				setNivelAtual(500000);
 				
 			}
 		});
 		
+	}
+	
+
+	
+	public void RegistraServico(){
 		
-				
+		addBehaviour(new OneShotBehaviour(this) {
+			
+			@Override
+			public void action() {
+				// TODO Auto-generated method stub
+
+				System.out.println(myAgent.getName() + ": Registrando servico de fornecimento de agua.");
+
+				String tipoServico = "Fornecimento";
+				String nomeServico = "Fornecimento de agua";
+
+				//Criacao da entra DF
+				DFAgentDescription dfd = new DFAgentDescription();
+				dfd.setName(getAID()); //informa o AID do agente
+
+
+				//Criacao do serviço 
+				ServiceDescription sd = new ServiceDescription();
+				sd.setType(tipoServico);
+				sd.setName(nomeServico);
+				//Adicao do serviço
+
+				dfd.addServices(sd);
+
+				//Criacao do serviço
+				try{
+					//register(agente que oferece, descrição)
+					DFService.register(myAgent, dfd);
+					System.out.println(myAgent.getName() + ": Servico de fornecimento de agua foi registrado com sucesso.");
+				}catch (FIPAException e){
+					e.printStackTrace();
+				}
+
+			}
+		});
+			}
+
+	public void procuraRepresa(){
+		
+		addBehaviour(new OneShotBehaviour() {
+			
+			@Override
+			public void action() {
+				// TODO Auto-generated method stub
+
+				AMSAgentDescription[] agentes = null;
+				SearchConstraints c = new SearchConstraints();
+				c.setMaxResults(new Long(-1));
+
+
+				try{
+
+					agentes = AMSService.search(myAgent, new AMSAgentDescription(), c);
+
+
+					for(int i = 0; i<agentes.length;i++){
+						AID agenteID = agentes[i].getName();
+
+						if(agenteID.equals("PaivaCastro@Sabesp:7778/JADE")){
+							setpaivaCastro(agenteID);
+							System.out.println( myAgent.getName() +": "+ agenteID.getName()+" foi encontrada!");
+						}
+					}
+				}
+				catch(FIPAException e){
+					e.printStackTrace();
+				}
+
+
+			}
+		});
+			}
+
+	public void trataMensagens(){
+		//comportamento para tratamento das mensagens recebidas
+				addBehaviour(new CyclicBehaviour(this) {
+
+					@Override
+					public void action() {
+						// TODO Auto-generated method stub
+
+						ACLMessage msg = receive();
+						if(msg != null){
+
+							String idConversa = msg.getConversationId();
+							String content = msg.getContent();
+							int tipoMensagem = msg.getPerformative();
+
+
+							if(idConversa.equalsIgnoreCase("Solicitacao de agua") && tipoMensagem == 16){
+								setConsumoConsumidor(Float.parseFloat(content));
+								setNomeConsumidor(msg.getSender());
+								//mostra o nome do consumidor e o valor solicitado
+								System.out.println(myAgent.getName() + ": Solicitacao do "+ nomeConsumidor.getName() +" foi feita no valor de "+ content);
+								
+								//Vou buscar pelos agentes
+								//a busca retorna um array DFAgente Description
+								//o paramentro this indica o agente que esta realizando a busca
+								System.out.println(myAgent.getName() + ": Iniciando requisicao de agua na Represa!");	
+								ACLMessage msgEnviada = new ACLMessage(ACLMessage.REQUEST);
+								msgEnviada.setOntology("Requisicao");
+								msgEnviada.setLanguage("Portugues");
+								msgEnviada.addReceiver(getpaivaCastro());
+								msgEnviada.setContent(String.valueOf(getConsumoConsumidor()));
+								msgEnviada.setConversationId("Requisicao de agua");
+								myAgent.send(msgEnviada);
+
+
+
+							}
+							else if(idConversa.equalsIgnoreCase("Requisicao de agua")){
+								setQtdAguaDistribuir(Float.parseFloat(content));
+
+								if(getConsumoConsumidor() == qtdAguaDistribuir){
+								
+									distribuiAgua(getNomeConsumidor(),getConsumoConsumidor());
+									System.out.println(myAgent.getName() + ": Agua recebida com sucesso da represa "+ msg.getSender() + " igual o valor solicitado."); 
+
+								}else if(getConsumoConsumidor() > qtdAguaDistribuir){
+									distribuiAgua(getNomeConsumidor(),getConsumoConsumidor());
+									System.out.println(myAgent.getName() + ": Recebi menos agua que o necessario para distribuir");
+								}else if(getConsumoConsumidor() < qtdAguaDistribuir){
+									//distribui a agua de forma de tal forma que os consumidores recebam o necessário
+
+									float excedente = getConsumoConsumidor() - qtdAguaDistribuir;
+									distribuiAgua(getNomeConsumidor(),getConsumoConsumidor());
+									System.out.println(myAgent.getName() + ": Recebi mais agua que o necessario para distribuir no valor de "+excedente);
+								}else{
+
+									System.out.println(myAgent.getName() + ": Nao recebi agua!");
+									distribuiAgua(getNomeConsumidor(),0);
+
+								}
+							}else
+								block();
+
+						}
+
+					}
+				});
+	}
+	
+	public void informaGestorCrise(){
+		//comportamento para informar o gasto para o gestor de crise caso encontre ele
+				addBehaviour(new CyclicBehaviour(this) {
+
+					@Override
+					public void action() {
+						// TODO Auto-generated method stub
+
+						AMSAgentDescription[] agentes = null;
+						SearchConstraints c = new SearchConstraints();
+						c.setMaxResults(new Long(-1));
+
+						try{
+
+							agentes = AMSService.search(myAgent, new AMSAgentDescription(), c);
+
+
+							for(int i = 0; i<agentes.length;i++){
+								AID agenteID = agentes[i].getName();
+								if(agenteID.equals("")){
+									System.out.println("Gestor de crise nao foi encontrada!");
+								}else{
+									if(agenteID.equals("GestorDeCrise@Sabesp:1099/JADE"))
+										setgestorCrise(agenteID);
+								}
+							}
+
+							ACLMessage msgEnviada = new ACLMessage(ACLMessage.REQUEST);
+							msgEnviada.setOntology("Gasto diario");
+							msgEnviada.setLanguage("Portugues");
+							msgEnviada.setSender(getgestorCrise());
+							msgEnviada.setContent(String.valueOf(getConsumoConsumidor()));
+							msgEnviada.setConversationId("Gasto diario");
+							myAgent.send(msgEnviada);
+
+
+						}	
+						catch(FIPAException e){
+							e.printStackTrace();
+						}
+
+					}
+				});
+
+		
+	}
+
+	
+	public void setup(){
+		//inicializacao do agente 
+		System.out.println("Agente "+ this.getName()+" foi inicializado!");
+
+
+		RegistraServico();
+		
+		procuraRepresa();
+		
+		trataMensagens();
+		
+		informaGestorCrise();
+
 	}
 
 	protected void takeDown(){
@@ -261,16 +299,16 @@ public class AgenteETA extends Agent {
 		catch(FIPAException e){
 			e.printStackTrace();
 		}
-		
+
 		System.out.println("Agente " + getAID() + "finalizado com sucesso");
 	}
 
-	public AID getAguasClaras() {
-		return aguasClaras;
+	public AID getpaivaCastro() {
+		return paivaCastro;
 	}
 
-	public void setAguasClaras(AID aguasClaras) {
-		this.aguasClaras = aguasClaras;
+	public void setpaivaCastro(AID paivaCastro) {
+		this.paivaCastro = paivaCastro;
 	}
 
 	float getQtdAguaDistribuir() {
@@ -282,12 +320,83 @@ public class AgenteETA extends Agent {
 	}
 
 
-	public AID getTomadorDecisoes() {
-		return tomadorDecisoes;
+	public AID getgestorCrise() {
+		return gestorCrise;
 	}
 
 
-	public void setTomadorDecisoes(AID tomadorDecisoes) {
-		this.tomadorDecisoes = tomadorDecisoes;
+	public void setgestorCrise(AID gestorCrise) {
+		this.gestorCrise = gestorCrise;
 	}
+
+
+	public float getConsumoConsumidor() {
+		return consumoConsumidor;
+	}
+
+
+	public void setConsumoConsumidor(float consumoConsumidor) {
+		this.consumoConsumidor = consumoConsumidor;
+	}
+
+
+	public AID getNomeConsumidor() {
+		return nomeConsumidor;
+	}
+
+
+	public void setNomeConsumidor(AID nomeConsumidor) {
+		this.nomeConsumidor = nomeConsumidor;
+	}
+
+	public float getCapacidadeMaxima() {
+		return capacidadeMaxima;
+	}
+
+	public void setCapacidadeMaxima(float capacidadeMaxima) {
+		this.capacidadeMaxima = capacidadeMaxima;
+	}
+
+	public float getNivelAtual() {
+		return nivelAtual;
+	}
+
+	public void setNivelAtual(float nivelAtual) {
+		this.nivelAtual = nivelAtual;
+	}
+
+	public int getP() {
+		return p;
+	}
+
+	public void setP(int p) {
+		this.p = p;
+	}
+
+	public int getQ() {
+		return q;
+	}
+
+	public void setQ(int q) {
+		this.q = q;
+	}
+
+	public int getK1() {
+		return k1;
+	}
+
+	public void setK1(int k1) {
+		this.k1 = k1;
+	}
+
+	public int getQ_esp() {
+		return q_esp;
+	}
+
+	public void setQ_esp(int q_esp) {
+		this.q_esp = q_esp;
+	}
+
+
+
 }
