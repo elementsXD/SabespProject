@@ -1,4 +1,4 @@
-package Agentes;
+package agentes;
 
 public class AgentePrevisaoDoTempo {
 

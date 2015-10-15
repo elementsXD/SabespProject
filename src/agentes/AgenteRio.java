@@ -1,6 +1,6 @@
-package Agentes;
+package agentes;
 
-import javafx.beans.binding.When;
+
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.*;
@@ -10,6 +10,7 @@ import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 
+@SuppressWarnings("serial")
 public class AgenteRio extends Agent{
 
 	AID atatibainha;
@@ -111,7 +112,6 @@ public class AgenteRio extends Agent{
 			public void action() {
 				// TODO Auto-generated method stub
 				
-				int qtd = 0;
 				
 				AMSAgentDescription[] agentes = null;
 				SearchConstraints c = new SearchConstraints();
