@@ -20,34 +20,9 @@ public class AgenteRio extends Agent{
 	float fluxoAguaCachoeira;
 	float fluxoAguaJaguari;
 	
-	protected void setup(){
+	public void procuraRepresas(){
 		
-		
-		System.out.println("Agente que representa os rios foi inicializado!");
-		System.out.println("Iniciando o fornecimento de agua para as Represas Jaguari, Cachoeira e Atatibainha.");
-		
-		ParallelBehaviour pb = new ParallelBehaviour(this, ParallelBehaviour.WHEN_ALL) {
-		
-			public int onEnd(){
-				System.out.println("Rio acabou de forncer a quantidade diário de água.");
-				return 0;
-			}
-		};
-		
-		addBehaviour(pb);
-		pb.addSubBehaviour(new SimpleBehaviour(this) {
-			int qtd=0;
-			
-			
-			@Override
-			public boolean done() {
-				// TODO Auto-generated method stub
-				if(qtd==1){
-					return true;
-				}
-				else
-				return false;
-			}
+		addBehaviour(new OneShotBehaviour(this) {
 			
 			@Override
 			public void action() {
@@ -65,136 +40,83 @@ public class AgenteRio extends Agent{
 					for(int i = 0; i<agentes.length;i++){
 						AID agenteID = agentes[i].getName();
 						
-						if(agenteID.equals("RepresaAtatibainha@Sabesp:1099/JADE")){
+						if(agenteID.equals("Atatibainha@Sabesp:1099/JADE")){
 							setAtatibainha(agenteID);
+						}else if(agenteID.equals("Cachoeira@Sabesp:1099/JADE")){
+							setCachoeira(agenteID);
+						}else if(agenteID.equals("Jaguari@Sabesp:1099/JADE")){
+							setJaguari(agenteID);
 						}
+						
+						
 					}
-				    		
-				    //Vou buscar pelos agentes
-				    //a busca retorna um array DFAgente Description
-				    //o paramentro this indica o agente que está realizando a busca
-				   
-				    
-				
-				    ACLMessage msgEnviada = new ACLMessage(ACLMessage.INFORM);
-			  	    msgEnviada.setOntology("Fornecimento rio");
-		    	    msgEnviada.setLanguage("Português");
-		    	    msgEnviada.setSender(getAtatibainha());
-		     	    msgEnviada.setContent(String.valueOf(getFluxoAguaAtatibainha()));
-			 	    msgEnviada.setConversationId("Fornecimento rio");
-			 	    myAgent.send(msgEnviada);
-				    	    
 				    	    
 				}	
 			   	catch(FIPAException e){
 			   		e.printStackTrace();
 			   	}
 				
-				qtd +=1;
 			}
 		});
 		
-		pb.addSubBehaviour(new SimpleBehaviour(this) {
-			
-			int qtd = 0;
-			
-			@Override
-			public boolean done() {
-				// TODO Auto-generated method stub
-				if(qtd==1){
-					return true;
-				}
-				else
-				return false;
-			}
+	}
+	
+	protected void setup(){
+		
+		
+		System.out.println("Agente que representa os rios foi inicializado!");
+		
+		procuraRepresas();
+		
+		System.out.println("Iniciando o fornecimento de agua para as Represas Jaguari, Cachoeira e Atatibainha.");
+		
+		
+		
+		//Fornecimento de agua para o Atibainha
+		addBehaviour(new CyclicBehaviour(this) {
 			
 			@Override
 			public void action() {
 				// TODO Auto-generated method stub
 				
+				    ACLMessage msgEnviada = new ACLMessage(ACLMessage.INFORM);
+			  	    msgEnviada.setOntology("Fornecimento rio");
+		    	    msgEnviada.setLanguage("Portugues");
+		    	    msgEnviada.setSender(getAtatibainha());
+		     	    msgEnviada.setContent(String.valueOf(getFluxoAguaAtatibainha()));
+			 	    msgEnviada.setConversationId("Fornecimento rio");
+			 	    myAgent.send(msgEnviada);
 				
-				AMSAgentDescription[] agentes = null;
-				SearchConstraints c = new SearchConstraints();
-				c.setMaxResults(new Long(-1));
-				
-				try{
-					
-					agentes = AMSService.search(myAgent, new AMSAgentDescription(), c);
-					
-					
-					for(int i = 0; i<agentes.length;i++){
-						AID agenteID = agentes[i].getName();
-						
-						if(agenteID.equals("RepresaCachoeira@Sabesp:1099/JADE")){
-							setCachoeira(agenteID);
-						}
-					}
-				    		
-				    //Vou buscar pelos agentes
-				    //a busca retorna um array DFAgente Description
-				    //o paramentro this indica o agente que está realizando a busca
-				   
-				    
+			}
+		});
+		
+		//Fornecimento de agua para o Cachoeirinha
+		addBehaviour(new CyclicBehaviour(this) {
+			
+			@Override
+			public void action() {
+				// TODO Auto-generated method stub
 				
 				    ACLMessage msgEnviada = new ACLMessage(ACLMessage.INFORM);
 			  	    msgEnviada.setOntology("Fornecimento rio");
-		    	    msgEnviada.setLanguage("Português");
+		    	    msgEnviada.setLanguage("Portugues");
 		    	    msgEnviada.setSender(getCachoeira());
 		     	    msgEnviada.setContent(String.valueOf(getFluxoAguaCachoeira()));
 			 	    msgEnviada.setConversationId("Fornecimento rio");
 			 	    myAgent.send(msgEnviada);
 				    	    
-				    	    
-				}	
-			   	catch(FIPAException e){
-			   		e.printStackTrace();
-			   	}
 				
-				qtd +=1;
 			}
 		});
 		
-		pb.addSubBehaviour(new SimpleBehaviour(this) {
-			
-			int qtd = 0;
-			
-			@Override
-			public boolean done() {
-				// TODO Auto-generated method stub
-				if(qtd==1){
-					return true;
-				}
-				else
-				return false;
-			}
+		//Fornecimento de agua para Jaguari
+		addBehaviour(new CyclicBehaviour(this) {
 			
 			@Override
 			public void action() {
 				// TODO Auto-generated method stub
 				
-				AMSAgentDescription[] agentes = null;
-				SearchConstraints c = new SearchConstraints();
-				c.setMaxResults(new Long(-1));
-				
-				try{
-					
-					agentes = AMSService.search(myAgent, new AMSAgentDescription(), c);
-					
-					
-					for(int i = 0; i<agentes.length;i++){
-						AID agenteID = agentes[i].getName();
-						
-						if(agenteID.equals("RepresaJaguari@Sabesp:1099/JADE")){
-							setJaguari(agenteID);
-						}
-					}
-				    		
-				    //Vou buscar pelos agentes
-				    //a busca retorna um array DFAgente Description
-				    //o paramentro this indica o agente que está realizando a busca
-				   
-				    
-				
+
 				    ACLMessage msgEnviada = new ACLMessage(ACLMessage.INFORM);
 			  	    msgEnviada.setOntology("Fornecimento rio");
 		    	    msgEnviada.setLanguage("Português");
@@ -202,52 +124,11 @@ public class AgenteRio extends Agent{
 		     	    msgEnviada.setContent(String.valueOf(getFluxoAguaJaguari()));
 			 	    msgEnviada.setConversationId("Fornecimento rio");
 			 	    myAgent.send(msgEnviada);
-				    	    
-				    	    
-				}	
-			   	catch(FIPAException e){
-			   		e.printStackTrace();
-			   	}
-				
-				qtd+=1;
-			}
-		});
-		
-		
-		
-		/*
-		addBehaviour(new CyclicBehaviour(this) {
-			
-			@Override
-			public void action() {
-				// TODO Auto-generated method stub
-				
-				
-			}
-		});
-		
-		addBehaviour(new CyclicBehaviour(this) {
-			
-			@Override
-			public void action() {
-				// TODO Auto-generated method stub
-				
-				
-			}
-		});
-		
-		addBehaviour(new CyclicBehaviour(this) {
-			
-			@Override
-			public void action() {
-				// TODO Auto-generated method stub
-				
-				
 				
 			}
 		});
 	
-	*/
+	
 	}
 		
 	public AID getAtatibainha() {
